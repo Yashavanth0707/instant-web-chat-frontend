@@ -1,5 +1,6 @@
-import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { ChatMessage } from '../types/room';
+import { openDB } from 'idb';
+import type { DBSchema, IDBPDatabase } from 'idb';
+import type { ChatMessage } from '../types/room';
 
 interface ChatDBSchema extends DBSchema {
   messages: {

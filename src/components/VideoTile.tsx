@@ -1,4 +1,32 @@
 import { useEffect, useRef } from 'react';
+import styled from 'styled-components';
+
+const Tile = styled.div`
+  position: relative;
+  background: ${({ theme }) => theme.colors.surface};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  overflow: hidden;
+`;
+
+const Video = styled.video<{ $isLocal: boolean }>`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: ${({ $isLocal }) => $isLocal ? 'scaleX(-1)' : 'none'};
+  background-color: ${({ theme }) => theme.colors.surface};
+  display: block;
+`;
+
+const Label = styled.div`
+  position: absolute;
+  bottom: ${({ theme }) => theme.spacing.sm};
+  left: ${({ theme }) => theme.spacing.sm};
+  padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
+  background: rgba(0, 0, 0, 0.7);
+  color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+`;
 
 interface VideoTileProps {
   stream: MediaStream | null;
@@ -17,23 +45,17 @@ export function VideoTile({ stream, userName, isLocal = false, muted = false }: 
   }, [stream]);
 
   return (
-    <div className="video-tile">
-      <video
+    <Tile>
+      <Video
         ref={videoRef}
         autoPlay
         playsInline
         muted={isLocal || muted}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          transform: isLocal ? 'scaleX(-1)' : 'none',
-          backgroundColor: '#1a1a1a',
-        }}
+        $isLocal={isLocal}
       />
-      <div className="video-label">
+      <Label>
         {userName} {isLocal && '(You)'}
-      </div>
-    </div>
+      </Label>
+    </Tile>
   );
 }

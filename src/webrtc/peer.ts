@@ -1,6 +1,7 @@
 import { Socket } from 'socket.io-client';
-import { PeerConnection } from '../types/room';
-import { createDataChannel, setupDataChannelHandlers, DataChannelMessage } from './dataChannel';
+import type { PeerConnection } from '../types/room';
+import { createDataChannel, setupDataChannelHandlers } from './dataChannel';
+import type { DataChannelMessage } from './dataChannel';
 
 const ICE_SERVERS: RTCConfiguration = {
   iceServers: [

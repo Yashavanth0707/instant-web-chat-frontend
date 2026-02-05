@@ -4,12 +4,21 @@ export interface User {
   socketId: string;
 }
 
+export type ChatType = 'text' | 'video';
+
 export interface RoomInfo {
   roomId: string;
   userCount: number;
   maxUsers: number;
+  chatType: ChatType;
   isFull: boolean;
   users: Omit<User, 'socketId'>[];
+}
+
+export interface RoomSettings {
+  maxUsers: number;
+  chatType: ChatType;
+  adminName: string;
 }
 
 export interface ChatMessage {

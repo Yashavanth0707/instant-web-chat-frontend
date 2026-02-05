@@ -1,4 +1,4 @@
-export interface DataChannelMessage {
+export type DataChannelMessage = {
   type: 'chat';
   payload: {
     id: string;

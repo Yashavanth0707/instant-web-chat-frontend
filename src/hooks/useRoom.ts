@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import { connectSocket, disconnectSocket } from '../socket/socket';
-import { ChatMessage, PeerConnection, User } from '../types/room';
+import type { ChatMessage, ChatType, PeerConnection, User } from '../types/room';
 import { getUserMedia, stopMediaStream } from '../webrtc/media';
 import {
   createPeerConnection,
@@ -11,21 +11,26 @@ import {
   handleIceCandidate,
   closePeerConnection,
 } from '../webrtc/peer';
-import { DataChannelMessage, sendDataChannelMessage } from '../webrtc/dataChannel';
+import { sendDataChannelMessage } from '../webrtc/dataChannel';
+import type { DataChannelMessage } from '../webrtc/dataChannel';
 import { saveMessage, getAllMessages, clearAllMessages } from '../db/indexedDB';
 
 interface UseRoomReturn {
   isConnected: boolean;
   isJoined: boolean;
+  isAdmin: boolean;
   error: string | null;
+  roomStopped: boolean;
+  chatType: ChatType;
   localStream: MediaStream | null;
   remoteStreams: Map<string, MediaStream>;
   messages: ChatMessage[];
   users: User[];
   userId: string | null;
   userName: string | null;
-  joinRoom: (roomId: string, userName: string) => void;
+  joinRoom: (roomId: string, userName: string, chatType: ChatType) => void;
   leaveRoom: () => void;
+  stopRoom: () => void;
   sendMessage: (content: string) => void;
   toggleLocalVideo: (enabled: boolean) => void;
   toggleLocalAudio: (enabled: boolean) => void;
@@ -34,7 +39,10 @@ interface UseRoomReturn {
 export function useRoom(): UseRoomReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [isJoined, setIsJoined] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [roomStopped, setRoomStopped] = useState(false);
+  const [chatType, setChatType] = useState<ChatType>('video');
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -45,6 +53,8 @@ export function useRoom(): UseRoomReturn {
   const socketRef = useRef<Socket | null>(null);
   const peerConnectionsRef = useRef<Map<string, PeerConnection>>(new Map());
   const roomIdRef = useRef<string | null>(null);
+  const chatTypeRef = useRef<ChatType>('video');
+  const localStreamRef = useRef<MediaStream | null>(null);
 
   // Load messages from IndexedDB on mount
   useEffect(() => {
@@ -106,18 +116,37 @@ export function useRoom(): UseRoomReturn {
   );
 
   // Join room
-  const joinRoom = useCallback(async (roomId: string, name: string) => {
+  const joinRoom = useCallback(async (roomId: string, name: string, type: ChatType = 'video') => {
     try {
       setError(null);
       roomIdRef.current = roomId;
+      chatTypeRef.current = type;
+      setChatType(type);
 
-      // Get user media
-      const stream = await getUserMedia({ video: true, audio: true });
-      setLocalStream(stream);
+      // Get user media only for video chat
+      let stream: MediaStream | null = null;
+      if (type === 'video') {
+        stream = await getUserMedia({ video: true, audio: true });
+        setLocalStream(stream);
+        localStreamRef.current = stream;
+      }
 
       // Connect socket
       const socket = connectSocket();
       socketRef.current = socket;
+
+      // Remove any existing listeners before adding new ones
+      socket.off('connect');
+      socket.off('join-success');
+      socket.off('join-error');
+      socket.off('user-joined');
+      socket.off('user-left');
+      socket.off('offer');
+      socket.off('answer');
+      socket.off('ice-candidate');
+      socket.off('room-closed');
+      socket.off('room-stopped');
+      socket.off('disconnect');
 
       // Socket event handlers
       socket.on('connect', () => {
@@ -125,10 +154,11 @@ export function useRoom(): UseRoomReturn {
         socket.emit('join-room', { roomId, userName: name });
       });
 
-      socket.on('join-success', async ({ userId: id, userName: uName, users: existingUsers }) => {
+      socket.on('join-success', async ({ userId: id, userName: uName, users: existingUsers, isAdmin: admin }) => {
         setUserId(id);
         setUserName(uName);
         setIsJoined(true);
+        setIsAdmin(admin || false);
 
         // Add system message
         const joinMsg: ChatMessage = {
@@ -245,10 +275,22 @@ export function useRoom(): UseRoomReturn {
         setMessages([]);
       });
 
+      socket.on('room-stopped', async () => {
+        setRoomStopped(true);
+        await clearAllMessages();
+        setMessages([]);
+      });
+
       socket.on('disconnect', () => {
         setIsConnected(false);
         setIsJoined(false);
       });
+
+      // If already connected, emit join immediately (after all listeners are registered)
+      if (socket.connected) {
+        setIsConnected(true);
+        socket.emit('join-room', { roomId, userName: name });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to join room');
     }
@@ -263,7 +305,10 @@ export function useRoom(): UseRoomReturn {
     peerConnectionsRef.current.clear();
 
     // Stop local media
-    stopMediaStream(localStream);
+    if (localStreamRef.current) {
+      stopMediaStream(localStreamRef.current);
+      localStreamRef.current = null;
+    }
     setLocalStream(null);
 
     // Clear remote streams
@@ -283,11 +328,19 @@ export function useRoom(): UseRoomReturn {
     // Reset state
     setIsConnected(false);
     setIsJoined(false);
+    setIsAdmin(false);
     setUsers([]);
     setUserId(null);
     setUserName(null);
     roomIdRef.current = null;
-  }, [localStream]);
+  }, []);
+
+  // Stop room (admin only)
+  const stopRoom = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.emit('stop-room');
+    }
+  }, []);
 
   // Send message
   const sendMessage = useCallback(
@@ -352,15 +405,20 @@ export function useRoom(): UseRoomReturn {
       peerConnectionsRef.current.forEach((peer) => {
         closePeerConnection(peer);
       });
-      stopMediaStream(localStream);
+      if (localStreamRef.current) {
+        stopMediaStream(localStreamRef.current);
+      }
       disconnectSocket();
     };
-  }, [localStream]);
+  }, []);
 
   return {
     isConnected,
     isJoined,
+    isAdmin,
     error,
+    roomStopped,
+    chatType,
     localStream,
     remoteStreams,
     messages,
@@ -369,6 +427,7 @@ export function useRoom(): UseRoomReturn {
     userName,
     joinRoom,
     leaveRoom,
+    stopRoom,
     sendMessage,
     toggleLocalVideo,
     toggleLocalAudio,
