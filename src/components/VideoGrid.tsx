@@ -10,6 +10,8 @@ const Grid = styled.div<{ $count: number }>`
   background: ${({ theme }) => theme.colors.black};
   grid-template-columns: ${({ $count }) => $count <= 2 ? 'repeat(2, 1fr)' : 'repeat(2, 1fr)'};
   grid-template-rows: ${({ $count }) => $count > 2 ? 'repeat(2, 1fr)' : '1fr'};
+  min-height: 0;
+  overflow: hidden;
 `;
 
 interface VideoGridProps {

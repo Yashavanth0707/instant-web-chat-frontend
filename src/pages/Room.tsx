@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import {
@@ -97,6 +97,8 @@ const VideoSection = styled.div`
   display: flex;
   flex-direction: column;
   background: ${({ theme }) => theme.colors.background};
+  min-height: 0;
+  overflow: hidden;
 `;
 
 const Controls = styled.div`
@@ -136,6 +138,8 @@ const ChatSection = styled.div<{ $fullWidth: boolean }>`
   max-width: ${({ $fullWidth }) => $fullWidth ? '800px' : 'none'};
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
   background: ${({ theme }) => theme.colors.surface};
   border-left: ${({ $fullWidth, theme }) => $fullWidth ? 'none' : `1px solid ${theme.colors.border}`};
 
@@ -253,25 +257,17 @@ export function Room() {
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [audioEnabled, setAudioEnabled] = useState(true);
 
-  // Track if we've initiated joining to prevent double calls
-  const isJoiningRef = useRef(false);
-
   useEffect(() => {
     if (!userName || !roomId) {
       navigate(`/join/${roomId}`);
       return;
     }
 
-    // Prevent multiple join attempts
-    if (isJoiningRef.current || isJoined) return;
-    isJoiningRef.current = true;
-
+    // joinRoom internally clears old listeners before adding new ones,
+    // so calling it again on StrictMode remount is safe
     joinRoom(roomId, userName, initialChatType);
-
-    return () => {
-      isJoiningRef.current = false;
-    };
-  }, [roomId, userName, initialChatType, joinRoom, navigate, isJoined]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, userName, initialChatType]);
 
   const handleToggleVideo = () => {
     const newState = !videoEnabled;
@@ -369,9 +365,11 @@ export function Room() {
               >
                 {audioEnabled ? <Mic size={20} /> : <MicOff size={20} />}
               </ControlButton>
-              <ControlButton onClick={handleLeave} $danger title="Leave room">
-                <LogOut size={20} />
-              </ControlButton>
+              {isAdmin && (
+                <ControlButton onClick={handleStopRoom} $danger title="Stop room for everyone">
+                  <XCircle size={20} />
+                </ControlButton>
+              )}
             </Controls>
           </VideoSection>
         )}

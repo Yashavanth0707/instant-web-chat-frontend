@@ -1,8 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { Send } from 'lucide-react';
+import { Send, Smile } from 'lucide-react';
 import type { ChatMessage } from '../types/room';
 import { MessageItem } from './MessageItem';
+
+const EMOJI_LIST = [
+  '😀', '😂', '😍', '🥰', '😎', '🤩', '😢', '😭',
+  '😡', '🤔', '🙄', '😴', '🤗', '😱', '🥳', '😇',
+  '👍', '👎', '👋', '🙌', '💪', '🤝', '✌️', '🫡',
+  '❤️', '🔥', '⭐', '💯', '🎉', '👏', '💀', '😈',
+  '🫶', '🤣', '😊', '🥺', '😤', '🤡', '💔', '✅',
+];
 
 const Box = styled.div`
   display: flex;
@@ -75,6 +83,63 @@ const Input = styled.input`
   }
 `;
 
+const InputRow = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.sm};
+  align-items: center;
+  flex: 1;
+  position: relative;
+`;
+
+const EmojiButton = styled.button`
+  padding: 8px;
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.colors.textMuted};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  transition: color ${({ theme }) => theme.transitions.fast}, background ${({ theme }) => theme.transitions.fast};
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.white};
+    background: ${({ theme }) => theme.colors.border};
+  }
+`;
+
+const EmojiPicker = styled.div`
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 8px;
+  padding: ${({ theme }) => theme.spacing.sm};
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  z-index: 10;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+`;
+
+const EmojiItem = styled.button`
+  padding: 6px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  line-height: 1;
+  transition: background ${({ theme }) => theme.transitions.fast};
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.border};
+  }
+`;
+
 const SendButton = styled.button`
   padding: 10px 16px;
   background: ${({ theme }) => theme.colors.primary};
@@ -114,12 +179,28 @@ export function ChatBox({
   onTyping
 }: ChatBoxProps) {
   const [input, setInput] = useState('');
+  const [showEmojis, setShowEmojis] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) {
+        setShowEmojis(false);
+      }
+    };
+    if (showEmojis) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showEmojis]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -135,6 +216,12 @@ export function ChatBox({
         onTyping(false);
       }, 1000);
     }
+  };
+
+  const handleEmojiSelect = (emoji: string) => {
+    setInput((prev) => prev + emoji);
+    setShowEmojis(false);
+    inputRef.current?.focus();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -176,12 +263,27 @@ export function ChatBox({
       )}
 
       <InputForm onSubmit={handleSubmit}>
-        <Input
-          type="text"
-          value={input}
-          onChange={handleInputChange}
-          placeholder="Type a message..."
-        />
+        <InputRow ref={emojiPickerRef}>
+          <EmojiButton type="button" onClick={() => setShowEmojis((prev) => !prev)} title="Emojis">
+            <Smile size={20} />
+          </EmojiButton>
+          {showEmojis && (
+            <EmojiPicker>
+              {EMOJI_LIST.map((emoji) => (
+                <EmojiItem key={emoji} type="button" onClick={() => handleEmojiSelect(emoji)}>
+                  {emoji}
+                </EmojiItem>
+              ))}
+            </EmojiPicker>
+          )}
+          <Input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={handleInputChange}
+            placeholder="Type a message..."
+          />
+        </InputRow>
         <SendButton type="submit" disabled={!input.trim()}>
           <Send size={18} />
         </SendButton>

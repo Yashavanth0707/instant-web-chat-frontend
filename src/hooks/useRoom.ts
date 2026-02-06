@@ -123,15 +123,15 @@ export function useRoom(): UseRoomReturn {
       chatTypeRef.current = type;
       setChatType(type);
 
-      // Get user media only for video chat
-      let stream: MediaStream | null = null;
-      if (type === 'video') {
+      // Get user media only for video chat (reuse existing stream if available)
+      let stream: MediaStream | null = localStreamRef.current;
+      if (type === 'video' && !stream) {
         stream = await getUserMedia({ video: true, audio: true });
         setLocalStream(stream);
         localStreamRef.current = stream;
       }
 
-      // Connect socket
+      // Connect socket (reuses existing if available)
       const socket = connectSocket();
       socketRef.current = socket;
 
@@ -399,9 +399,9 @@ export function useRoom(): UseRoomReturn {
     [localStream]
   );
 
-  // Cleanup on unmount
+  // Cleanup on page unload (not on React unmount, to avoid StrictMode issues)
   useEffect(() => {
-    return () => {
+    const handleBeforeUnload = () => {
       peerConnectionsRef.current.forEach((peer) => {
         closePeerConnection(peer);
       });
@@ -410,6 +410,8 @@ export function useRoom(): UseRoomReturn {
       }
       disconnectSocket();
     };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
   return {
