@@ -250,6 +250,11 @@ export function Room() {
     leaveRoom,
     stopRoom,
     sendMessage,
+    sendFileMessage,
+    fileError,
+    clearFileError,
+    fileTransferProgress,
+    fileSendProgress,
     toggleLocalVideo,
     toggleLocalAudio,
   } = useRoom();
@@ -393,6 +398,11 @@ export function Room() {
             messages={messages}
             userId={userId || ''}
             onSendMessage={sendMessage}
+            onSendFile={sendFileMessage}
+            fileTransferProgress={fileTransferProgress}
+            fileSendProgress={fileSendProgress}
+            fileError={fileError}
+            onClearFileError={clearFileError}
           />
         </ChatSection>
       </Content>

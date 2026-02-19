@@ -23,11 +23,33 @@ export interface RoomSettings {
 
 export interface ChatMessage {
   id: string;
+  roomId: string;
   senderId: string;
   senderName: string;
   content: string;
   timestamp: number;
-  type: 'text' | 'system';
+  type: 'text' | 'system' | 'file';
+  file?: FileInfo;
+}
+
+export interface FileInfo {
+  name: string;
+  size: number;
+  mimeType: string;
+  data?: ArrayBuffer;
+  /** Base64-encoded data for IndexedDB storage */
+  dataBase64?: string;
+}
+
+export interface FileTransfer {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  totalChunks: number;
+  receivedChunks: Map<number, string>;
+  senderId: string;
+  senderName: string;
 }
 
 export interface PeerConnection {

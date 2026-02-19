@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { Send, Smile } from 'lucide-react';
+import { Send, Smile, Paperclip, X, Upload, Download } from 'lucide-react';
 import type { ChatMessage } from '../types/room';
 import { MessageItem } from './MessageItem';
 
@@ -163,10 +163,93 @@ const SendButton = styled.button`
   }
 `;
 
+const FileButton = styled.button`
+  padding: 8px;
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.colors.textMuted};
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  transition: color ${({ theme }) => theme.transitions.fast}, background ${({ theme }) => theme.transitions.fast};
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.white};
+    background: ${({ theme }) => theme.colors.border};
+  }
+`;
+
+const HiddenFileInput = styled.input`
+  display: none;
+`;
+
+const TransferProgressBar = styled.div`
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const TransferItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  font-size: ${({ theme }) => theme.fontSize.sm};
+  color: ${({ theme }) => theme.colors.textMuted};
+`;
+
+const ProgressTrack = styled.div`
+  flex: 1;
+  height: 4px;
+  background: ${({ theme }) => theme.colors.border};
+  border-radius: 2px;
+  overflow: hidden;
+`;
+
+const ProgressFill = styled.div<{ $percent: number }>`
+  height: 100%;
+  width: ${({ $percent }) => $percent}%;
+  background: ${({ theme }) => theme.colors.primary};
+  border-radius: 2px;
+  transition: width 0.2s ease;
+`;
+
+const FileErrorBar = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.lg};
+  background: ${({ theme }) => theme.colors.error};
+  color: ${({ theme }) => theme.colors.white};
+  font-size: ${({ theme }) => theme.fontSize.sm};
+`;
+
+const FileErrorClose = styled.button`
+  background: none;
+  border: none;
+  color: ${({ theme }) => theme.colors.white};
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  opacity: 0.8;
+
+  &:hover {
+    opacity: 1;
+  }
+`;
+
 interface ChatBoxProps {
   messages: ChatMessage[];
   userId: string;
   onSendMessage: (content: string) => void;
+  onSendFile?: (file: File) => void;
+  fileTransferProgress?: Map<string, number>;
+  fileSendProgress?: { fileName: string; percent: number } | null;
+  fileError?: string | null;
+  onClearFileError?: () => void;
   typingUsers?: string[];
   onTyping?: (isTyping: boolean) => void;
 }
@@ -175,6 +258,11 @@ export function ChatBox({
   messages,
   userId,
   onSendMessage,
+  onSendFile,
+  fileTransferProgress,
+  fileSendProgress,
+  fileError,
+  onClearFileError,
   typingUsers = [],
   onTyping
 }: ChatBoxProps) {
@@ -184,10 +272,19 @@ export function ChatBox({
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Auto-dismiss file error after 5 seconds
+  useEffect(() => {
+    if (fileError && onClearFileError) {
+      const timer = setTimeout(onClearFileError, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [fileError, onClearFileError]);
 
   // Close emoji picker when clicking outside
   useEffect(() => {
@@ -224,6 +321,15 @@ export function ChatBox({
     inputRef.current?.focus();
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onSendFile) {
+      onSendFile(file);
+    }
+    // Reset so same file can be selected again
+    e.target.value = '';
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
@@ -248,6 +354,29 @@ export function ChatBox({
         <div ref={messagesEndRef} />
       </Messages>
 
+      {(fileSendProgress || (fileTransferProgress && fileTransferProgress.size > 0)) && (
+        <TransferProgressBar>
+          {fileSendProgress && (
+            <TransferItem>
+              <Upload size={14} />
+              Sending {fileSendProgress.fileName}... {fileSendProgress.percent}%
+              <ProgressTrack>
+                <ProgressFill $percent={fileSendProgress.percent} />
+              </ProgressTrack>
+            </TransferItem>
+          )}
+          {fileTransferProgress && Array.from(fileTransferProgress.entries()).map(([id, percent]) => (
+            <TransferItem key={id}>
+              <Download size={14} />
+              Receiving file... {percent}%
+              <ProgressTrack>
+                <ProgressFill $percent={percent} />
+              </ProgressTrack>
+            </TransferItem>
+          ))}
+        </TransferProgressBar>
+      )}
+
       {typingUsers.length > 0 && (
         <TypingIndicator>
           <TypingDots>
@@ -260,6 +389,15 @@ export function ChatBox({
             : `${typingUsers.join(', ')} are typing...`
           }
         </TypingIndicator>
+      )}
+
+      {fileError && (
+        <FileErrorBar>
+          <span>{fileError}</span>
+          <FileErrorClose onClick={onClearFileError} title="Dismiss">
+            <X size={16} />
+          </FileErrorClose>
+        </FileErrorBar>
       )}
 
       <InputForm onSubmit={handleSubmit}>
@@ -275,6 +413,19 @@ export function ChatBox({
                 </EmojiItem>
               ))}
             </EmojiPicker>
+          )}
+          {onSendFile && (
+            <>
+              <FileButton type="button" onClick={() => fileInputRef.current?.click()} title="Send file">
+                <Paperclip size={20} />
+              </FileButton>
+              <HiddenFileInput
+                ref={fileInputRef}
+                type="file"
+                onChange={handleFileSelect}
+                accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar"
+              />
+            </>
           )}
           <Input
             ref={inputRef}
