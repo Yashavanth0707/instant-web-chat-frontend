@@ -10,7 +10,8 @@ import {
   MessageSquare,
   Users,
   Loader2,
-  XCircle
+  XCircle,
+  ShieldCheck
 } from 'lucide-react';
 import { useRoom } from '../hooks/useRoom';
 import { VideoGrid } from '../components/VideoGrid';
@@ -45,12 +46,12 @@ const HeaderInfo = styled.div`
   gap: 1rem;
 `;
 
-const Badge = styled.span`
+const Badge = styled.span<{ $green?: boolean }>`
   padding: ${({ theme }) => theme.spacing.xs} 10px;
-  background: ${({ theme }) => theme.colors.border};
+  background: ${({ theme, $green }) => $green ? 'rgba(34, 197, 94, 0.15)' : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   font-size: ${({ theme }) => theme.fontSize.sm};
-  color: ${({ theme }) => theme.colors.white};
+  color: ${({ theme, $green }) => $green ? theme.colors.success : theme.colors.white};
   display: flex;
   align-items: center;
   gap: 6px;
@@ -325,6 +326,10 @@ export function Room() {
           <Badge>
             {isVideoChat ? <Video size={14} /> : <MessageSquare size={14} />}
             {isVideoChat ? 'Video' : 'Text'}
+          </Badge>
+          <Badge $green>
+            <ShieldCheck size={14} />
+            P2P Encrypted
           </Badge>
           <UserCount>
             <Users size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />

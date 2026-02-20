@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
-import { Video, MessageSquare, Check } from 'lucide-react';
-import { useCreateRoom } from '../hooks/useRoomApi';
-import type { ChatType } from '../types/room';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import styled from "styled-components";
+import { Video, MessageSquare, Check } from "lucide-react";
+import { useCreateRoom } from "../hooks/useRoomApi";
+import type { ChatType } from "../types/room";
 
 const Page = styled.div`
   min-height: 100vh;
@@ -14,7 +14,8 @@ const Page = styled.div`
 const Container = styled.div`
   max-width: 500px;
   margin: 0 auto;
-  padding: ${({ theme }) => theme.spacing.xxl} ${({ theme }) => theme.spacing.xl};
+  padding: ${({ theme }) => theme.spacing.xxl}
+    ${({ theme }) => theme.spacing.xl};
   text-align: center;
 `;
 
@@ -74,10 +75,14 @@ const CountButton = styled.button<{ $active: boolean }>`
   padding: ${({ theme }) => theme.spacing.md};
   font-size: ${({ theme }) => theme.fontSize.lg};
   font-weight: 600;
-  border: 2px solid ${({ theme, $active }) => $active ? theme.colors.primary : theme.colors.border};
+  border: 2px solid
+    ${({ theme, $active }) =>
+      $active ? theme.colors.primary : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  background: ${({ theme, $active }) => $active ? theme.colors.primary : theme.colors.surface};
-  color: ${({ theme, $active }) => $active ? theme.colors.white : theme.colors.textMuted};
+  background: ${({ theme, $active }) =>
+    $active ? theme.colors.primary : theme.colors.surface};
+  color: ${({ theme, $active }) =>
+    $active ? theme.colors.white : theme.colors.textMuted};
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.fast};
 
@@ -103,10 +108,14 @@ const TypeButton = styled.button<{ $active: boolean }>`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.lg};
-  border: 2px solid ${({ theme, $active }) => $active ? theme.colors.primary : theme.colors.border};
+  border: 2px solid
+    ${({ theme, $active }) =>
+      $active ? theme.colors.primary : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
-  background: ${({ theme, $active }) => $active ? 'rgba(100, 108, 255, 0.1)' : theme.colors.surface};
-  color: ${({ theme, $active }) => $active ? theme.colors.white : theme.colors.textMuted};
+  background: ${({ theme, $active }) =>
+    $active ? "rgba(100, 108, 255, 0.1)" : theme.colors.surface};
+  color: ${({ theme, $active }) =>
+    $active ? theme.colors.white : theme.colors.textMuted};
   cursor: pointer;
   transition: all ${({ theme }) => theme.transitions.fast};
 
@@ -121,8 +130,9 @@ const TypeIcon = styled.span`
 `;
 
 const PrimaryButton = styled.button<{ $large?: boolean }>`
-  padding: ${({ $large }) => $large ? '18px 40px' : '14px 28px'};
-  font-size: ${({ $large, theme }) => $large ? theme.fontSize.lg : theme.fontSize.base};
+  padding: ${({ $large }) => ($large ? "18px 40px" : "14px 28px")};
+  font-size: ${({ $large, theme }) =>
+    $large ? theme.fontSize.lg : theme.fontSize.base};
   font-weight: 600;
   color: ${({ theme }) => theme.colors.white};
   background: ${({ theme }) => theme.colors.primary};
@@ -189,15 +199,15 @@ export function CreateRoom() {
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const [maxUsers, setMaxUsers] = useState(2);
-  const [chatType, setChatType] = useState<ChatType>('video');
-  const [adminName, setAdminName] = useState('');
+  const [chatType, setChatType] = useState<ChatType>("video");
+  const [adminName, setAdminName] = useState("");
 
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError(null);
 
     if (!adminName.trim()) {
-      setValidationError('Please enter your name');
+      setValidationError("Please enter your name");
       return;
     }
 
@@ -212,11 +222,11 @@ export function CreateRoom() {
 
           setTimeout(() => {
             navigate(`/room/${data.roomId}`, {
-              state: { userName: adminName.trim(), chatType: data.chatType }
+              state: { userName: adminName.trim(), chatType: data.chatType },
             });
           }, 1500);
         },
-      }
+      },
     );
   };
 
@@ -246,7 +256,7 @@ export function CreateRoom() {
     <Page>
       <Container>
         <Title>Instant Web Chat</Title>
-        <Subtitle>P2P Video & Text Chat</Subtitle>
+        <Subtitle>Video & Text Chat (P2P Encrypted)</Subtitle>
 
         <Form onSubmit={handleCreateRoom}>
           <FormGroup>
@@ -282,25 +292,35 @@ export function CreateRoom() {
             <TypeSelector>
               <TypeButton
                 type="button"
-                $active={chatType === 'video'}
-                onClick={() => setChatType('video')}
+                $active={chatType === "video"}
+                onClick={() => setChatType("video")}
               >
-                <TypeIcon><Video size={24} /></TypeIcon>
+                <TypeIcon>
+                  <Video size={24} />
+                </TypeIcon>
                 <span>Video Chat</span>
               </TypeButton>
               <TypeButton
                 type="button"
-                $active={chatType === 'text'}
-                onClick={() => setChatType('text')}
+                $active={chatType === "text"}
+                onClick={() => setChatType("text")}
               >
-                <TypeIcon><MessageSquare size={24} /></TypeIcon>
+                <TypeIcon>
+                  <MessageSquare size={24} />
+                </TypeIcon>
                 <span>Text Only</span>
               </TypeButton>
             </TypeSelector>
           </FormGroup>
 
-          <PrimaryButton type="submit" disabled={createRoomMutation.isPending} $large>
-            {createRoomMutation.isPending ? 'Creating...' : 'Create Room & Get Link'}
+          <PrimaryButton
+            type="submit"
+            disabled={createRoomMutation.isPending}
+            $large
+          >
+            {createRoomMutation.isPending
+              ? "Creating..."
+              : "Create Room & Get Link"}
           </PrimaryButton>
 
           {error && <ErrorText>{error}</ErrorText>}
