@@ -17,12 +17,21 @@ const Container = styled.div`
   padding: ${({ theme }) => theme.spacing.xxl}
     ${({ theme }) => theme.spacing.xl};
   text-align: center;
+  box-sizing: border-box;
+
+  @media (max-width: 480px) {
+    padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.lg};
+  }
 `;
 
 const Title = styled.h1`
   font-size: ${({ theme }) => theme.fontSize.xxl};
   margin-bottom: ${({ theme }) => theme.spacing.sm};
   color: ${({ theme }) => theme.colors.white};
+
+  @media (max-width: 480px) {
+    font-size: ${({ theme }) => theme.fontSize.xl};
+  }
 `;
 
 const Subtitle = styled.p`

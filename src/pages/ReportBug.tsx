@@ -21,6 +21,11 @@ const Container = styled.div`
   width: 100%;
   margin: 0 auto;
   padding: ${({ theme }) => theme.spacing.xxl} ${({ theme }) => theme.spacing.xl};
+  box-sizing: border-box;
+
+  @media (max-width: 480px) {
+    padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.lg};
+  }
 `;
 
 const BackButton = styled.button`
@@ -82,11 +87,13 @@ const Label = styled.label`
 
 const Input = styled.input`
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  font-size: ${({ theme }) => theme.fontSize.base};
+  font-size: 16px;
   border: 2px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   background: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.white};
+  width: 100%;
+  box-sizing: border-box;
   transition: border-color ${({ theme }) => theme.transitions.fast};
 
   &:focus {
@@ -97,7 +104,7 @@ const Input = styled.input`
 
 const TextArea = styled.textarea`
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
-  font-size: ${({ theme }) => theme.fontSize.base};
+  font-size: 16px;
   border: 2px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   background: ${({ theme }) => theme.colors.surface};
@@ -105,6 +112,8 @@ const TextArea = styled.textarea`
   font-family: inherit;
   resize: vertical;
   min-height: 120px;
+  width: 100%;
+  box-sizing: border-box;
   transition: border-color ${({ theme }) => theme.transitions.fast};
 
   &:focus {
@@ -131,6 +140,7 @@ const SubmitButton = styled.button`
   align-items: center;
   justify-content: center;
   gap: ${({ theme }) => theme.spacing.sm};
+  width: 100%;
   transition: background ${({ theme }) => theme.transitions.fast};
   margin-top: ${({ theme }) => theme.spacing.sm};
 

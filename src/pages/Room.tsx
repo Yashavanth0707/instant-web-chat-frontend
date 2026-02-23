@@ -32,18 +32,33 @@ const Header = styled.div`
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
   background: ${({ theme }) => theme.colors.surface};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+
+  @media (max-width: 480px) {
+    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  }
 `;
 
 const RoomTitle = styled.h2`
   font-size: ${({ theme }) => theme.fontSize.base};
   color: ${({ theme }) => theme.colors.white};
   margin: 0;
+
+  @media (max-width: 480px) {
+    font-size: ${({ theme }) => theme.fontSize.sm};
+  }
 `;
 
 const HeaderInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    gap: 0.5rem;
+  }
 `;
 
 const Badge = styled.span<{ $green?: boolean }>`
@@ -55,6 +70,7 @@ const Badge = styled.span<{ $green?: boolean }>`
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 `;
 
 const UserCount = styled.span`
@@ -79,6 +95,7 @@ const HeaderButton = styled.button<{ $danger?: boolean }>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
+  white-space: nowrap;
   transition: background ${({ theme }) => theme.transitions.fast};
 
   &:hover {
@@ -91,6 +108,10 @@ const Content = styled.div<{ $isVideo: boolean }>`
   flex: 1;
   overflow: hidden;
   justify-content: ${({ $isVideo }) => $isVideo ? 'flex-start' : 'center'};
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `;
 
 const VideoSection = styled.div`

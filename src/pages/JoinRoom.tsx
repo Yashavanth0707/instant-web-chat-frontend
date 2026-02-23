@@ -16,6 +16,11 @@ const Container = styled.div`
   margin: 0 auto;
   padding: ${({ theme }) => theme.spacing.xxl} ${({ theme }) => theme.spacing.xl};
   text-align: center;
+  box-sizing: border-box;
+
+  @media (max-width: 480px) {
+    padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.lg};
+  }
 `;
 
 const Title = styled.h1`

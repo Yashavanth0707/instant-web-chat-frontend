@@ -7,6 +7,7 @@ import { CreateRoom } from './pages/CreateRoom';
 import { JoinRoom } from './pages/JoinRoom';
 import { Room } from './pages/Room';
 import { ReportBug } from './pages/ReportBug';
+import { NotFound } from './pages/NotFound';
 import { theme } from './styles/theme';
 import { GlobalStyles } from './styles/GlobalStyles';
 
@@ -47,7 +48,7 @@ function ReportBugFab() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  if (location.pathname === '/report-bug') return null;
+  if (location.pathname !== '/') return null;
 
   return (
     <BugButton onClick={() => navigate('/report-bug')} title="Report a Bug">
@@ -67,6 +68,7 @@ function App() {
             <Route path="/join/:roomId" element={<JoinRoom />} />
             <Route path="/room/:roomId" element={<Room />} />
             <Route path="/report-bug" element={<ReportBug />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
           <ReportBugFab />
         </BrowserRouter>
