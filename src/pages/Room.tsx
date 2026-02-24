@@ -10,7 +10,8 @@ import {
   MessageSquare,
   Users,
   Loader2,
-  XCircle
+  XCircle,
+  ShieldCheck
 } from 'lucide-react';
 import { useRoom } from '../hooks/useRoom';
 import { VideoGrid } from '../components/VideoGrid';
@@ -31,29 +32,45 @@ const Header = styled.div`
   padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.xl};
   background: ${({ theme }) => theme.colors.surface};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.sm};
+
+  @media (max-width: 480px) {
+    padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  }
 `;
 
 const RoomTitle = styled.h2`
   font-size: ${({ theme }) => theme.fontSize.base};
   color: ${({ theme }) => theme.colors.white};
   margin: 0;
+
+  @media (max-width: 480px) {
+    font-size: ${({ theme }) => theme.fontSize.sm};
+  }
 `;
 
 const HeaderInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    gap: 0.5rem;
+  }
 `;
 
-const Badge = styled.span`
+const Badge = styled.span<{ $green?: boolean }>`
   padding: ${({ theme }) => theme.spacing.xs} 10px;
-  background: ${({ theme }) => theme.colors.border};
+  background: ${({ theme, $green }) => $green ? 'rgba(34, 197, 94, 0.15)' : theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   font-size: ${({ theme }) => theme.fontSize.sm};
-  color: ${({ theme }) => theme.colors.white};
+  color: ${({ theme, $green }) => $green ? theme.colors.success : theme.colors.white};
   display: flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 `;
 
 const UserCount = styled.span`
@@ -78,6 +95,7 @@ const HeaderButton = styled.button<{ $danger?: boolean }>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
+  white-space: nowrap;
   transition: background ${({ theme }) => theme.transitions.fast};
 
   &:hover {
@@ -90,6 +108,10 @@ const Content = styled.div<{ $isVideo: boolean }>`
   flex: 1;
   overflow: hidden;
   justify-content: ${({ $isVideo }) => $isVideo ? 'flex-start' : 'center'};
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `;
 
 const VideoSection = styled.div`
@@ -250,6 +272,11 @@ export function Room() {
     leaveRoom,
     stopRoom,
     sendMessage,
+    sendFileMessage,
+    fileError,
+    clearFileError,
+    fileTransferProgress,
+    fileSendProgress,
     toggleLocalVideo,
     toggleLocalAudio,
   } = useRoom();
@@ -320,6 +347,10 @@ export function Room() {
           <Badge>
             {isVideoChat ? <Video size={14} /> : <MessageSquare size={14} />}
             {isVideoChat ? 'Video' : 'Text'}
+          </Badge>
+          <Badge $green>
+            <ShieldCheck size={14} />
+            P2P Encrypted
           </Badge>
           <UserCount>
             <Users size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
@@ -393,6 +424,11 @@ export function Room() {
             messages={messages}
             userId={userId || ''}
             onSendMessage={sendMessage}
+            onSendFile={sendFileMessage}
+            fileTransferProgress={fileTransferProgress}
+            fileSendProgress={fileSendProgress}
+            fileError={fileError}
+            onClearFileError={clearFileError}
           />
         </ChatSection>
       </Content>
